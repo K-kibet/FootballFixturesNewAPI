@@ -1,0 +1,20 @@
+<resources>
+    <string name="app_name">FootballFixtures</string>
+
+    <!--Ad Unit -->
+    <string name="App_Id">ca-app-pub-3940256099942544~3347511713</string>
+    <string name="Interstitial_Ad_Unit">ca-app-pub-3940256099942544/10331737120</string>
+    <string name="Banner_Ad_Unit">ca-app-pub-3940256099942544/63009781110</string>
+    <string name="App_Open_Manager">ca-app-pub-3940256099942544/92573959210</string>
+    <string name="Native_Ad_Id">ca-app-pub-3940256099942544/22476961100</string>
+    <string name="Rewarded_Ad_Id">ca-app-pub-3940256099942544/53540463790</string>
+
+    //urls
+    <string name="twitter_profile">http://www.twitter.com/@codespear_org</string>
+    <string name="more_apps_url">https://play.google.com/store/apps/dev?id=4741861730913815865</string>
+    <string name="app_url">https://play.google.com/store/apps/details?id=com.pinterest.video.downloader.pinvideodownloader</string>
+
+
+    //api
+    <string name="api_key">dd4c6045c36332fecf17b47a6d0440b5</string>
+</resources>
