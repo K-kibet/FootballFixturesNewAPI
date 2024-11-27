@@ -16,7 +16,6 @@ class RewardedInterstitialManager(var activity: Activity, var context: Context) 
     OnUserEarnedRewardListener {
     private var rewardedInterstitialAd: RewardedInterstitialAd? = null
     fun loadAd() {
-        // Use the test ad unit ID to load an ad.
         RewardedInterstitialAd.load(
             activity, activity.getString(R.string.Rewarded_Ad_Id),
             AdRequest.Builder().build(), object : RewardedInterstitialAdLoadCallback() {
@@ -70,7 +69,6 @@ class RewardedInterstitialManager(var activity: Activity, var context: Context) 
             //loadAd()
         }
     }
-
     override fun onUserEarnedReward(rewardItem: RewardItem) {
     }
 }

@@ -2,11 +2,8 @@ package com.codesui.footballfixtures.fragments
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -16,13 +13,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.codesui.footballfixtures.R
 import com.codesui.footballfixtures.Requests.RetrofitClient
+import com.codesui.footballfixtures.resources.ErrorDialog
 import com.codesui.footballfixtures.resources.IndeterminateCircularIndicator
 import com.codesui.footballfixtures.resources.NoInternetDialog
 import com.codesui.footballfixtures.resources.isInternetAvailable
@@ -33,7 +27,7 @@ import java.text.SimpleDateFormat
 import java.util.Date
 
 @Composable
-fun FixturesScreen(navController: NavController, runAds: () -> Unit, rewardedAds: () -> Unit) {
+fun ResultsScreen(navController: NavController, runAds: () -> Unit, rewardedAds: () -> Unit) {
     Column (modifier = Modifier.fillMaxSize()){
         val fixtures = remember { mutableStateOf<List<JsonObject>?>(null) }
         val isLoading = remember { mutableStateOf(true) }
@@ -50,7 +44,7 @@ fun FixturesScreen(navController: NavController, runAds: () -> Unit, rewardedAds
                 } finally {
                     isLoading.value = false
                 }
-                isButtonClicked = false
+                isButtonClicked = false // Reset state after task
             }
         }
 
@@ -58,7 +52,6 @@ fun FixturesScreen(navController: NavController, runAds: () -> Unit, rewardedAds
             isLoading.value -> {
                 IndeterminateCircularIndicator()
             }
-
             error.value != null -> {
                 when{
                     !isInternetAvailable(LocalContext.current) -> {
@@ -70,15 +63,7 @@ fun FixturesScreen(navController: NavController, runAds: () -> Unit, rewardedAds
                     }
 
                     isInternetAvailable(LocalContext.current) -> {
-                        Text(
-                            modifier = Modifier
-                                .padding(8.dp)
-                                .fillMaxWidth(),
-                            text = "Fixtures Not Available!",
-                            fontWeight = FontWeight.Medium,
-                            fontSize = 20.sp,
-                            textAlign = TextAlign.Center
-                        )
+                        ErrorDialog()
                     }
                 }
             }
@@ -88,13 +73,16 @@ fun FixturesScreen(navController: NavController, runAds: () -> Unit, rewardedAds
                     modifier = Modifier.fillMaxSize()
                 ) {
                     items(items = fixtures.value!!) { fixture ->
+                        //Fixture(fixture, navController, runAds)
+
                         when{
-                            fixture.get("match_live").asString.equals("0") && !fixture.get("match_status").asString.equals("Finished") -> {
+                            fixture.get("match_live").asString.equals("0") && fixture.get("match_status").asString.equals("Finished") -> {
                                 Fixture(fixture, navController, runAds)
                             }
                         }
                     }
                 }
+                AdmobBanner()
             }
         }
     }

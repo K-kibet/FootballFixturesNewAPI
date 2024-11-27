@@ -1,11 +1,11 @@
 package com.codesui.footballfixtures.resources
 
 object Routes {
-    val startScreen = "start_screen"
-    val mainScreen = "tips_screen"
-    val leagueScreen = "league_screen"
-    val playerScreen = "player_screen"
-    val teamScreen = "team_screen"
-    val fixtureScreen = "feature_screen"
-    val detailsScreen = "details_screen"
+    const val startScreen = "start_screen"
+    const val mainScreen = "tips_screen"
+    const val termsScreen = "terms_screen"
+    const val aboutScreen = "about_screen"
+    const val fixtureScreen = "feature_screen"
+    const val leagueScreen = "league_screen"
+    const val playerScreen = "player_screen"
 }

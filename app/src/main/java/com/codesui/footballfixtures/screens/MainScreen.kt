@@ -24,18 +24,22 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberTopAppBarState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.navigation.NavController
 import com.codesui.footballfixtures.fragments.FixturesScreen
 import com.codesui.footballfixtures.fragments.HomeScreen
 import com.codesui.footballfixtures.fragments.LeaguesScreen
 import com.codesui.footballfixtures.fragments.LivescoresScreen
+import com.codesui.footballfixtures.fragments.ResultsScreen
 import com.codesui.footballfixtures.resources.NavItem
+import com.codesui.footballfixtures.resources.PreferencesManager
+import com.codesui.powerkingtips.ads.AdmobBanner
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
@@ -51,14 +55,12 @@ fun MainScreen (
     val navItemList = listOf(
         NavItem("Home", Icons.Default.Home),
         NavItem("Fixtures", Icons.Default.DateRange),
-        NavItem("Scores", Icons.AutoMirrored.Filled.List),
+        NavItem("Live", Icons.AutoMirrored.Filled.List),
+        NavItem("Results", Icons.Default.Menu),
         NavItem("Leagues", Icons.Default.Star)
     )
-
-    var selectedIndex by remember {
-        mutableIntStateOf(0)
-    }
-
+    val preferencesManager = PreferencesManager(LocalContext.current)
+    var selectedIndex by remember { mutableStateOf(preferencesManager.getInteger("selectedIndex", 0)) }
     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior(rememberTopAppBarState())
 
     Scaffold (
@@ -81,7 +83,6 @@ fun MainScreen (
                 navigationIcon = {
                     IconButton(onClick = {
                         navController.popBackStack()
-                        runAds .invoke()
                     }) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
@@ -110,7 +111,9 @@ fun MainScreen (
                     NavigationBarItem(
                         selected = selectedIndex == index,
                         onClick = {
+                            preferencesManager.saveInteger("selectedIndex", index)
                             selectedIndex = index
+                            runAds.invoke()
                         },
                         icon = {
                             Icon(imageVector = navItem.icon, contentDescription = "Icon")
@@ -126,8 +129,6 @@ fun MainScreen (
         ContentScreen(modifier = Modifier.padding(innerPadding), selectedIndex, navController, runAds, rewardedAds)
     }
 }
-
-
 @Composable
 fun ContentScreen(modifier: Modifier, selectedIndex : Int, navController: NavController, runAds: () -> Unit, rewardedAds: () -> Unit) {
     Column (
@@ -137,7 +138,8 @@ fun ContentScreen(modifier: Modifier, selectedIndex : Int, navController: NavCon
             0 -> HomeScreen(navController, runAds, rewardedAds)
             1 -> FixturesScreen(navController, runAds, rewardedAds)
             2 -> LivescoresScreen(navController, runAds, rewardedAds)
-            3 -> LeaguesScreen(navController, runAds, rewardedAds)
+            3 -> ResultsScreen(navController, runAds, rewardedAds)
+            4 -> LeaguesScreen(navController, runAds, rewardedAds)
         }
     }
 }

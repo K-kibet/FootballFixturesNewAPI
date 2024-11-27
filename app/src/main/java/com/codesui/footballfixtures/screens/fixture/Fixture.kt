@@ -3,15 +3,15 @@ package com.codesui.footballfixtures.screens.fixture
 
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -23,7 +23,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
@@ -40,37 +44,53 @@ import com.codesui.footballfixtures.resources.Routes
 import com.google.gson.JsonObject
 
 @Composable
-fun Fixture(item:JsonObject,navController: NavController) {
-    val id = item.getAsJsonObject("fixture").get("id").asString
-    val homeTeam = item.getAsJsonObject("teams").getAsJsonObject("home").get("name").asString
-    val awayTeam = item.getAsJsonObject("teams").getAsJsonObject("away").get("name").asString
-    val homeTeamIcon = item.getAsJsonObject("teams").getAsJsonObject("home").get("logo").asString
-    val awayTeamIcon = item.getAsJsonObject("teams").getAsJsonObject("away").get("logo").asString
-    val date = item.getAsJsonObject("fixture").get("date").asString.split("T")[0]
-    val time = item.getAsJsonObject("fixture").get("date").asString
-        .split("T")[1].split("Z")[0]
-        .split("+")[0]
+fun Fixture(item:JsonObject,navController: NavController, runAds: () -> Unit) {
+    val isDarkTheme = isSystemInDarkTheme()
+    val textColor = if (isDarkTheme) Color.White else Color.Black
+    val bgColor = if (isDarkTheme) Color.Black else Color.White
+    val id = item.get("match_id").asString
+    val homeTeam = item.get("match_hometeam_name").asString
+    val awayTeam = item.get("match_awayteam_name").asString
+    val homeTeamIcon = item.get("team_home_badge").asString
+    val awayTeamIcon = item.get("team_away_badge").asString
+    val date = if(item.get("match_status").asString.equals("Finished")) {
+        "FT " +  item.get("match_hometeam_score").asString + "-" + item.get("match_awayteam_score").asString
+    } else item.get("match_date").asString
+
+    val time = item.get("match_time").asString
     Card(
         modifier = Modifier
-            .padding(3.dp)
-            .width(340.dp)
+            .padding(0.dp)
+            .fillMaxWidth()
             .wrapContentHeight()
+            .drawBehind {
+                val strokeWidth = Stroke.DefaultMiter
+                val y = size.height
+                drawLine(
+                    Color.LightGray,
+                    Offset(0f, y),
+                    Offset(size.width, y),
+                    strokeWidth
+                )
+            }
             .padding(2.dp)
+            .aspectRatio(6f)
             .clickable {
                 navController.navigate(
                     route = Routes.fixtureScreen + "/${id}"
                 )
+                runAds.invoke()
             },
-        shape = RoundedCornerShape(5.dp),
         colors = CardDefaults.cardColors(
-            containerColor = Color.White
+            containerColor = bgColor
         ),
-        elevation = CardDefaults.cardElevation(2.dp)
+        shape = RoundedCornerShape(0.dp),
+        elevation = CardDefaults.cardElevation(0.dp)
     ) {
         Row(
             modifier = Modifier
-                .padding(3.dp)
-                .height(90.dp),
+                .padding(2.dp)
+                .fillMaxSize(),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
@@ -84,19 +104,20 @@ fun Fixture(item:JsonObject,navController: NavController) {
                 AsyncImage(
                     model = homeTeamIcon,
                     contentDescription = stringResource(id = R.string.app_name),
-                    placeholder = painterResource(id = R.drawable.fball),
+                    placeholder = painterResource(id = R.mipmap.ic_launcher_foreground),
+                    error = painterResource(id = R.mipmap.ic_launcher_foreground),
                     contentScale = ContentScale.Fit,
                     modifier = Modifier
-                        .size(70.dp)
+                        .size(30.dp)
                         .clip(CircleShape)
                 )
-
                 Text(
                     text = homeTeam,
                     style = MaterialTheme.typography.bodyMedium,
                     textAlign = TextAlign.Center,
+                    color = textColor,
                     modifier = Modifier.fillMaxWidth(),
-                    maxLines = 2,
+                    maxLines = 1,
                     overflow = TextOverflow.Clip
                 )
 
@@ -104,7 +125,7 @@ fun Fixture(item:JsonObject,navController: NavController) {
             Column (
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(2.dp)
+                    .padding(1.dp)
                     .weight(1.3f)
                     .padding(0.dp),
                 verticalArrangement = Arrangement.SpaceEvenly,
@@ -113,18 +134,21 @@ fun Fixture(item:JsonObject,navController: NavController) {
                 Text(
                     text = date,
                     fontSize = 18.sp,
-                    fontWeight =  FontWeight.Bold,
+                    fontWeight =  FontWeight.Light,
+                    color = textColor,
                     modifier = Modifier
                         .border(
                             1.dp,
                             colorResource(id = R.color.purple_700),
                             CircleShape
-                        ).padding(5.dp)
+                        )
+                        .padding(vertical = 5.dp, horizontal = 10.dp)
                 )
                 Text(
                     text = time,
                     fontSize = 16.sp,
-                    fontWeight =  FontWeight.Bold
+                    color = textColor,
+                    fontWeight =  FontWeight.SemiBold
                 )
             }
 
@@ -138,18 +162,20 @@ fun Fixture(item:JsonObject,navController: NavController) {
                 AsyncImage(
                     model = awayTeamIcon,
                     contentDescription = stringResource(id = R.string.app_name),
-                    placeholder = painterResource(id = R.drawable.fball),
+                    placeholder = painterResource(id = R.mipmap.ic_launcher_foreground),
+                    error = painterResource(id = R.mipmap.ic_launcher_foreground),
                     contentScale = ContentScale.Fit,
                     modifier = Modifier
-                        .size(70.dp)
-                        .clip(CircleShape)
+                        .size(30.dp)
+                        .clip(RectangleShape)
                 )
                 Text(
                     text = awayTeam,
                     style = MaterialTheme.typography.bodyMedium,
                     textAlign = TextAlign.Center,
+                    color = textColor,
                     modifier = Modifier.fillMaxWidth(),
-                    maxLines = 2,
+                    maxLines = 1,
                     overflow = TextOverflow.Clip
                 )
 

@@ -11,8 +11,8 @@ android {
         applicationId = "com.codesui.footballfixtures"
         minSdk = 24
         targetSdk = 34
-        versionCode = 1
-        versionName = "1.0"
+        versionCode = 3
+        versionName = "3.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
@@ -71,10 +71,10 @@ dependencies {
     debugImplementation("androidx.compose.ui:ui-test-manifest")
 
     implementation("androidx.core:core-splashscreen:1.0.1")
-    implementation("androidx.navigation:navigation-compose:2.7.7")
+    implementation("androidx.navigation:navigation-compose:2.8.2")
     implementation("com.google.accompanist:accompanist-pager-indicators:0.35.1-alpha")
-    implementation("com.google.android.gms:play-services-ads:23.3.0")
-    implementation("androidx.lifecycle:lifecycle-process:2.8.4")
+    implementation("com.google.android.gms:play-services-ads:23.4.0")
+    implementation("androidx.lifecycle:lifecycle-process:2.8.6")
     implementation("io.github.farimarwat:admobnative-compose:1.2")
     implementation("io.coil-kt:coil-compose:2.7.0")
     implementation("com.squareup.retrofit2:retrofit:2.11.0")

@@ -23,7 +23,7 @@ import androidx.compose.ui.unit.sp
 import com.codesui.footballfixtures.R
 
 @Composable
-fun ErrorDialog(){
+fun EmptyScreen(text: String){
     Box(
         modifier = Modifier
             .size(width = 380.dp, height = 400.dp)
@@ -35,28 +35,19 @@ fun ErrorDialog(){
             verticalArrangement = Arrangement.Center
         ) {
             Icon(
-                painter = painterResource(id = R.drawable.baseline_error_24),
+                painter = painterResource(id = R.drawable.baseline_data_array_24),
                 contentDescription = "",
                 modifier = Modifier.size(100.dp),
-                tint = Color.Red
+                tint = MaterialTheme.colorScheme.secondary
             )
             Spacer(modifier = Modifier.height(20.dp))
             Text(
                 modifier = Modifier
                     .fillMaxWidth(),
-                text = "Oops! Data Not Available!",
+                text = "The list of $text is empty!",
                 fontWeight = FontWeight.Medium,
                 fontSize = 20.sp,
                 textAlign = TextAlign.Center
-            )
-            Spacer(modifier = Modifier.height(20.dp))
-            Text(
-                text = "An Unknown Error Occurred,\ntry again later",
-                style = MaterialTheme.typography.bodyMedium,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(50.dp),
-                textAlign = androidx.compose.ui.text.style.TextAlign.Center
             )
         }
     }

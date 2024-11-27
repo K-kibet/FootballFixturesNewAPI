@@ -14,13 +14,10 @@ public class AppOpenAdManager {
         private var appOpenAd: AppOpenAd? = null
         private var isLoadingAd = false
         var isShowingAd = false
-
         fun loadAd(context: Context) {
-            // Do not load ad if there is an unused ad or one is already loading.
             if (isLoadingAd || isAdAvailable()) {
                 return
             }
-
             isLoadingAd = true
             val request = AdRequest.Builder().build()
             AppOpenAd.load(
@@ -37,23 +34,15 @@ public class AppOpenAdManager {
                     }
                 })
         }
-
-        /** Utility method to check if ad was loaded more than n hours ago. */
         private fun wasLoadTimeLessThanNHoursAgo(numHours: Long): Boolean {
             val dateDifference: Long = Date().time - loadTime
             val numMilliSecondsPerHour: Long = 3600000
             return dateDifference < numMilliSecondsPerHour * numHours
         }
-
-        /** Check if ad exists and can be shown. */
         private fun isAdAvailable(): Boolean {
             return appOpenAd != null && wasLoadTimeLessThanNHoursAgo(4)
         }
-
-        /** Keep track of the time an app open ad is loaded to ensure you don't show an expired ad. */
-        private var loadTime: Long = 0;
-
-        /** Shows the ad if one isn't already showing. */
+        private var loadTime: Long = 0
         fun showAdIfAvailable(
             activity: Activity
         ) {

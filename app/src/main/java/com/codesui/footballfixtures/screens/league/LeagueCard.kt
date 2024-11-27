@@ -1,15 +1,18 @@
 package com.codesui.footballfixtures.screens.league
 
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
+import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
@@ -19,12 +22,17 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
@@ -34,39 +42,50 @@ import com.codesui.footballfixtures.resources.Routes
 import com.google.gson.JsonObject
 
 @Composable
-fun LeagueCard(item: JsonObject, navController: NavController){
-
-    val league = item.getAsJsonObject("league")
-    val leagueLogo = league.get("logo").asString
-    val leagueName = league.get("name")?.asString ?: "Unknown League"
-    val leagueCountry = item.getAsJsonObject("country").get("name")?.asString
-    val leagueId = league.get("id").asString
-
-    val start = item.getAsJsonArray("seasons").last().asJsonObject.get("start").asString
-    val end = item.getAsJsonArray("seasons").last().asJsonObject.get("end").asString
-
+fun LeagueCard(league : JsonObject, navController: NavController, runAds: () -> Unit){
+    val isDarkTheme = isSystemInDarkTheme()
+    val textColor = if (isDarkTheme) Color.White else Color.Black
+    val bgColor = if (isDarkTheme) Color.Black else Color.White
+    val leagueLogo = league.get("league_logo").asString
+    val countryLogo = league.get("country_logo").asString
+    val leagueName = league.get("league_name").asString
+    val leagueCountry = league.get("country_name").asString
+    val leagueId = league.get("league_id").asString
+    val season = league.get("league_season").asString
 
     Card (
         modifier = Modifier
-            .wrapContentHeight()
+            .padding(0.dp)
             .fillMaxWidth()
-            .padding(5.dp)
+            .wrapContentHeight()
+            .drawBehind {
+                val strokeWidth = Stroke.DefaultMiter
+                val y = size.height
+                drawLine(
+                    Color.LightGray,
+                    Offset(0f, y),
+                    Offset(size.width, y),
+                    strokeWidth
+                )
+            }
+            .padding(2.dp)
             .clickable {
                 navController.navigate(
                     route = Routes.leagueScreen + "/${leagueId}"
                 )
+                runAds.invoke()
             },
-        shape = RoundedCornerShape(4.dp),
+        shape = RoundedCornerShape(0.dp),
         colors = CardDefaults.cardColors(
-            containerColor = Color.White
+            containerColor = bgColor
         ),
-        elevation = CardDefaults.cardElevation(8.dp)
+        elevation = CardDefaults.cardElevation(0.dp)
     ){
         Row(
             modifier = Modifier
-                .padding(5.dp)
                 .fillMaxWidth()
-                .height(100.dp),
+                .height(55.dp)
+                .padding(horizontal = 8.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
@@ -74,9 +93,11 @@ fun LeagueCard(item: JsonObject, navController: NavController){
                 model = leagueLogo,
                 contentDescription = stringResource(id = R.string.app_name),
                 placeholder = painterResource(id = R.mipmap.ic_launcher_foreground),
-                contentScale = ContentScale.Fit,
+                error = painterResource(id = R.mipmap.ic_launcher_foreground),
+                contentScale = ContentScale.Crop,
                 modifier = Modifier
-                    .width(70.dp)
+                    .width(50.dp)
+                    .height(50.dp)
                     .wrapContentHeight()
                     .clip(CircleShape),
             )
@@ -88,23 +109,47 @@ fun LeagueCard(item: JsonObject, navController: NavController){
                 horizontalAlignment = Alignment.CenterHorizontally
             ){
                 Text(
-                    text = leagueCountry + " - " + leagueName,
+                    text = "$leagueName - $season",
                     modifier = Modifier
                         .weight(1f)
                         .fillMaxWidth(),
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.Bold,
-                    textAlign = TextAlign.Center
+                    fontWeight = FontWeight.SemiBold,
+                    textAlign = TextAlign.Start,
+                    color = textColor,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis
                 )
-                Text(
-                    text = start + " -> " + end,
+
+                Row(
                     modifier = Modifier
-                        .weight(1f)
-                        .fillMaxWidth(),
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.Normal,
-                    textAlign = TextAlign.Center,
-                )
+                        .fillMaxWidth()
+                        .wrapContentHeight(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.End,
+
+                ) {
+                    Text(
+                        text = leagueCountry,
+                        modifier = Modifier
+                            .wrapContentWidth(),
+                        fontWeight = FontWeight.Light,
+                        textAlign = TextAlign.Center,
+                        color = textColor
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    AsyncImage(
+                        model = countryLogo,
+                        contentDescription = stringResource(id = R.string.app_name),
+                        placeholder = painterResource(id = R.mipmap.ic_launcher_foreground),
+                        error = painterResource(id = R.mipmap.ic_launcher_foreground),
+                        contentScale = ContentScale.Inside,
+                        modifier = Modifier
+                            .width(25.dp)
+                            .height(20.dp)
+                            .wrapContentHeight()
+                            .clip(RectangleShape),
+                    )
+                }
             }
         }
 

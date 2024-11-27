@@ -2,9 +2,7 @@ package com.codesui.footballfixtures.screens.league
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -15,12 +13,13 @@ import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -29,6 +28,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -39,130 +39,137 @@ import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import com.codesui.footballfixtures.R
 import com.codesui.footballfixtures.Requests.RetrofitClient
+import com.codesui.footballfixtures.resources.EmptyScreen
+import com.codesui.footballfixtures.resources.ErrorDialog
+import com.codesui.footballfixtures.resources.IndeterminateCircularIndicator
+import com.codesui.footballfixtures.resources.NoInternetDialog
+import com.codesui.footballfixtures.resources.isInternetAvailable
 import com.google.gson.JsonObject
 
 @Composable
 fun StandingsScreen(navController: NavController, leagueId: String){
-    //Toast.makeText(LocalContext.current, leagueId, Toast.LENGTH_LONG ).show()
-
     val standings = remember { mutableStateOf<List<JsonObject>?>(null) }
     val isLoading = remember { mutableStateOf(true) }
     val error = remember { mutableStateOf<String?>(null) }
 
-    // Define your headers and query parameters
-    val headers = mapOf("x-rapidapi-key" to stringResource(id = R.string.api_key), "x-rapidapi-host" to "v3.football.api-sports.io")
-    val params = mapOf("league" to leagueId, "season" to "2024")
-
-    LaunchedEffect(Unit) {
-        try {
-            val response = RetrofitClient.apiService.getStandings(headers, params)
-            val responseObject = response.getAsJsonArray("response").asJsonArray
-                .first().asJsonObject.getAsJsonObject("league")
-            val standingsArray = responseObject.getAsJsonArray("standings")
-                .first().asJsonArray
-            standings.value = standingsArray.map { it.asJsonObject }
-        } catch (e: Exception) {
-            error.value = e.message
-        } finally {
-            isLoading.value = false
+    val params = mapOf("action" to "get_standings", "league_id" to leagueId, "APIkey" to stringResource(id = R.string.api_key))
+    var isButtonClicked by remember { mutableStateOf(true) }
+    LaunchedEffect(isButtonClicked) {
+        if (isButtonClicked) {
+            try {
+                val response = RetrofitClient.apiService.getStandings(params)
+                standings.value = response.map { it.asJsonObject }
+            } catch (e: Exception) {
+                error.value = e.message
+            } finally {
+                isLoading.value = false
+            }
+            isButtonClicked = false // Reset state after task
         }
     }
 
     Column (
         modifier = Modifier.fillMaxSize()
     ){
-        Row (
-            modifier = Modifier.fillMaxWidth()
-        ){
-            Text(
-                text = "Club",
-                fontWeight = FontWeight.Bold,
-                textAlign = TextAlign.Center,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .weight(4.5f)
-                    .wrapContentHeight(Alignment.CenterVertically),
-            )
-            Text(
-                text = "MP",
-                fontWeight = FontWeight.Bold,
-                textAlign = TextAlign.Center,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .weight(1f)
-                    .wrapContentHeight(Alignment.CenterVertically),
-            )
-            Text(
-                text = "W",
-                fontWeight = FontWeight.Bold,
-                textAlign = TextAlign.Center,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .weight(1f)
-                    .wrapContentHeight(Alignment.CenterVertically),
-            )
-            Text(
-                text = "D",
-                fontWeight = FontWeight.Bold,
-                textAlign = TextAlign.Center,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .weight(1f)
-                    .wrapContentHeight(Alignment.CenterVertically),
-            )
-            Text(
-                text = "L",
-                fontWeight = FontWeight.Bold,
-                textAlign = TextAlign.Center,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .weight(1f)
-                    .wrapContentHeight(Alignment.CenterVertically),
-            )
-            Text(
-                text = "GD",
-                fontWeight = FontWeight.Bold,
-                textAlign = TextAlign.Center,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .weight(1f)
-                    .wrapContentHeight(Alignment.CenterVertically),
-            )
-            Text(
-                text = "PT",
-                fontWeight = FontWeight.Bold,
-                textAlign = TextAlign.Center,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .weight(1f)
-                    .wrapContentHeight(Alignment.CenterVertically),
-            )
-        }
-
-
         when {
             isLoading.value -> {
-                // Display a loading message
-                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    CircularProgressIndicator()
-                }
+                IndeterminateCircularIndicator()
             }
 
             error.value != null -> {
-                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    Text(text = "Error: ${error.value}")
+                when{
+                    !isInternetAvailable(LocalContext.current) -> {
+                        NoInternetDialog {
+                            isButtonClicked = true
+                            isLoading.value = true
+                            error.value = null
+                        }
+                    }
+
+                    isInternetAvailable(LocalContext.current) -> {
+                        ErrorDialog()
+                    }
                 }
             }
 
             standings.value != null -> {
-                LazyColumn(
-                    modifier = Modifier.fillMaxSize(),
-                    contentPadding = PaddingValues(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    items(items = standings.value!!) { standing ->
-                        //LeagueCard(league, navController)
-                        TeamStats(standing, navController)
+                if (standings.value!!.isEmpty()) {
+                    EmptyScreen("league")
+                } else {
+                    Row (
+                        modifier = Modifier.fillMaxWidth()
+                    ){
+                        Text(
+                            text = "Team",
+                            fontWeight = FontWeight.Bold,
+                            textAlign = TextAlign.Center,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .weight(5.5f)
+                                .wrapContentHeight(Alignment.CenterVertically),
+                        )
+                        Text(
+                            text = "MP",
+                            fontWeight = FontWeight.Bold,
+                            textAlign = TextAlign.Center,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .weight(1f)
+                                .wrapContentHeight(Alignment.CenterVertically),
+                        )
+                        Text(
+                            text = "W",
+                            fontWeight = FontWeight.Bold,
+                            textAlign = TextAlign.Center,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .weight(1f)
+                                .wrapContentHeight(Alignment.CenterVertically),
+                        )
+                        Text(
+                            text = "D",
+                            fontWeight = FontWeight.Bold,
+                            textAlign = TextAlign.Center,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .weight(1f)
+                                .wrapContentHeight(Alignment.CenterVertically),
+                        )
+                        Text(
+                            text = "L",
+                            fontWeight = FontWeight.Bold,
+                            textAlign = TextAlign.Center,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .weight(1f)
+                                .wrapContentHeight(Alignment.CenterVertically),
+                        )
+                        Text(
+                            text = "GD",
+                            fontWeight = FontWeight.Bold,
+                            textAlign = TextAlign.Center,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .weight(1f)
+                                .wrapContentHeight(Alignment.CenterVertically),
+                        )
+                        Text(
+                            text = "PT",
+                            fontWeight = FontWeight.Bold,
+                            textAlign = TextAlign.Center,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .weight(1f)
+                                .wrapContentHeight(Alignment.CenterVertically),
+                        )
+                    }
+                    LazyColumn(
+                        modifier = Modifier.fillMaxSize(),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        items(items = standings.value!!) { standing ->
+                            TeamStats(standing, navController)
+                        }
                     }
                 }
             }
@@ -173,23 +180,24 @@ fun StandingsScreen(navController: NavController, leagueId: String){
 @Composable
 fun TeamStats(team: JsonObject, navController: NavController) {
 
-    val rank = team.get("rank").asString
-    val teamLogo = team.getAsJsonObject("team").get("logo").asString
-    val teamName = team.getAsJsonObject("team").get("name").asString
-    val teamId = team.getAsJsonObject("team").get("id")?.asString
-    val teamPoints = team.get("points").asString
-    val goalDiff = team.get("goalsDiff").asString
-    val gamesPlayed = team.getAsJsonObject("all").get("played").asString
-    val teamWin = team.getAsJsonObject("all").get("win").asString
-    val teamDraw = team.getAsJsonObject("all").get("draw").asString
-    val teamLose = team.getAsJsonObject("all").get("lose").asString
+    val rank = team.get("overall_league_position").asString
+    val teamLogo = team.get("team_badge").asString
+    val teamName = team.get("team_name").asString
+    val teamId = team.get("team_id").asString
+    val teamPoints = team.get("overall_league_PTS").asString
+    val gamesPlayed = team.get("overall_league_payed").asString
+    val teamWin = team.get("overall_league_W").asString
+    val teamDraw = team.get("overall_league_D").asString
+    val teamLose = team.get("overall_league_L").asString
+
+    val goalFor = team.get("away_league_GF").asString.toInt()
+    val goalAgainst = team.get("away_league_GA").asString.toInt()
+    val goalDiff = (goalFor - goalAgainst).toString()
 
     Row (
         modifier = Modifier
             .fillMaxWidth()
-            .clickable {
-                //todo
-            }.drawBehind {
+            .drawBehind {
                 val strokeWidth = Stroke.DefaultMiter
                 val y = size.height
                 drawLine(
@@ -204,13 +212,13 @@ fun TeamStats(team: JsonObject, navController: NavController) {
         Row (
             modifier = Modifier
                 .fillMaxWidth()
-                .weight(4.5f)
+                .weight(5.5f)
                 .wrapContentHeight(Alignment.CenterVertically),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
                 text = rank,
-                fontWeight = FontWeight.Normal,
+                fontWeight = FontWeight.Light,
                 textAlign = TextAlign.Center,
                 overflow = TextOverflow.Visible,
                 maxLines = 1,
@@ -222,12 +230,12 @@ fun TeamStats(team: JsonObject, navController: NavController) {
             AsyncImage(
                 model = teamLogo,
                 contentDescription = stringResource(id = R.string.app_name),
-                placeholder = painterResource(id = R.drawable.fball),
+                placeholder = painterResource(id = R.drawable.w1),
                 contentScale = ContentScale.Fit,
                 modifier = Modifier
-                    .padding(2.dp)
-                    .width(35.dp)
-                    .height(35.dp)
+                    .padding(vertical = 2.dp)
+                    .width(20.dp)
+                    .height(20.dp)
                     .clip(CircleShape)
             )
             Text(
@@ -236,9 +244,9 @@ fun TeamStats(team: JsonObject, navController: NavController) {
                 textAlign = TextAlign.Start,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .weight(3.5f)
+                    .weight(4f)
                     .wrapContentHeight(Alignment.CenterVertically),
-                maxLines = 2,
+                maxLines = 1,
                 overflow = TextOverflow.Ellipsis
             )
         }

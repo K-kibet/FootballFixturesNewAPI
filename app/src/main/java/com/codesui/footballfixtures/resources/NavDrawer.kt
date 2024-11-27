@@ -1,6 +1,5 @@
 package com.codesui.footballfixtures.resources
 
-import android.content.Intent
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -52,34 +51,29 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.codesui.footballfixtures.R
 import com.codesui.footballfixtures.screens.MainScreen
+import com.codesui.powerkingtips.resources.RateManager
+import com.codesui.powerkingtips.resources.ShareManager
 import kotlinx.coroutines.launch
 
 @Composable
 fun NavDrawer(navController: NavController, runAds: () -> Unit, openAds: () -> Unit, rewardedAds: () -> Unit) {
     val ctx = LocalContext.current
+    val rateManager = RateManager()
     val drawerItems = listOf(
-
         DrawerItems(Icons.Rounded.List, "Terms & Privacy",  clickFunction = {
-            //navController.navigate(Routes.termsScreen)
+            navController.navigate(Routes.termsScreen)
         }),
         DrawerItems(Icons.Rounded.Info, "About Us", clickFunction = {
-            //navController.navigate(Routes.aboutScreen)
+            navController.navigate(Routes.aboutScreen)
         }),
         DrawerItems(Icons.Rounded.Star, "Rate Us",  clickFunction ={
-            //UrlManager(ctx.getString(R.string.app_url), ctx)
+            rateManager.rateApp(ctx)
         }) ,
         DrawerItems(Icons.Rounded.Share, "Share With Friends", clickFunction = {
-            val sendIntent : Intent = Intent().apply {
-                action = Intent.ACTION_SEND
-                putExtra(Intent.EXTRA_TITLE, "Share App With Friends")
-                putExtra(Intent.EXTRA_TEXT, ctx.getString(R.string.app_url))
-                type = "text/plain"
-            }
-            val shareIntent = Intent.createChooser(sendIntent, null)
-            ctx.startActivity(shareIntent)
+            ShareManager(ctx)
         }),
         DrawerItems(Icons.Rounded.MoreVert, "More Apps", clickFunction = {
-            //UrlManager(ctx.getString(R.string.more_apps_url), ctx)
+            UrlManager(ctx.getString(R.string.more_apps_url), ctx)
         })
     )
 
